@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuiz Interaktif: Simpulan Bahasa</title>
+    <!-- Google Fonts & Confetti Library -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 650px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        .header {
+            background: #0984e3;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+        .sound-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: 'Poppins', sans-serif;
+            transition: background 0.2s;
+        }
+        .sound-btn:hover {
+            background: rgba(255, 255, 255, 0.45);
+        }
+        .quiz-body {
+            padding: 30px;
+        }
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+        }
+        .question-box {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .option-btn {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 15px 20px;
+            text-align: left;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #495057;
+        }
+        .option-btn:hover:not(:disabled) {
+            background: #e8f4fd;
+            border-color: #0984e3;
+            color: #0077b6;
+            transform: translateY(-2px);
+        }
+        .option-btn.correct {
+            background: #d1fae5 !important;
+            border-color: #10b981 !important;
+            color: #065f46 !important;
+        }
+        .option-btn.wrong {
+            background: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #991b1b !important;
+        }
+        .explanation-box {
+            background: #f0fdf4;
+            border-left: 5px solid #22c55e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: #166534;
+            display: none;
+        }
+        .next-btn {
+            background: #0984e3;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+        .next-btn:hover {
+            background: #0077b6;
+        }
+        .result-screen {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        .result-screen h2 {
+            font-size: 2rem;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+        .score-display {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #0984e3;
+            margin-bottom: 15px;
+        }
+        .result-message {
+            font-size: 1.1rem;
+            color: #4b5563;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .restart-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .restart-btn:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <button class="sound-btn" id="soundToggle" onclick="toggleSound()">🔊 Muzik: Tutup</button>
+            <h1>Kuiz Bahasa Melayu</h1>
+            <p>Topik Khusus: Simpulan Bahasa</p>
+        </div>
+
+        <div class="quiz-body" id="quizBody">
+            <div class="progress-bar">
+                <span id="questionCount">Soalan 1 dari 10</span>
+                <span id="scoreTracker">Skor: 0</span>
+            </div>
+
+            <div class="question-box" id="questionText">
+                Soalan akan dipaparkan di sini...
+            </div>
+
+            <div class="options-list" id="optionsList">
+                <!-- Pilihan jawapan dimasukkan melalui JS -->
+            </div>
+
+            <div class="explanation-box" id="explanationBox">
+                <strong>Penerangan:</strong> <span id="explanationText"></span>
+            </div>
+
+            <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Seterusnya ➔</button>
+        </div>
+
+        <div class="result-screen" id="resultScreen">
+            <h2>Tahniah! Kuiz Selesai 🎉</h2>
+            <div class="score-display" id="finalScore">0/10</div>
+            <p class="result-message" id="resultMessage">Anda telah menyiapkan kuiz ini dengan jayanya.</p>
+            <button class="restart-btn" onclick="restartQuiz()">Cuba Semula 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "1. Amir seorang murid yang _________ kerana dia sentiasa membantu guru dan rakan-rakannya di sekolah.\nPilih simpulan bahasa yang tepat.",
+                options: ["A. berat tulang", "B. ringan tulang", "C. panjang tangan", "D. batu api"],
+                answer: 1,
+                explanation: "Ringan tulang bermaksud rajin bekerja atau suka membantu orang lain."
+            },
+            {
+                question: "2. Kita tidak boleh berkawan dengan Ali kerana dia terkenal sebagai seorang yang _________ dan suka mengambil barang rakan.",
+                options: ["A. panjang tangan", "B. kaki bangku", "C. anak angkat", "D. tajam akal"],
+                answer: 0,
+                explanation: "Panjang tangan ialah simpulan bahasa yang bermaksud suka mencuri."
+            },
+            {
+                question: "3. Walaupun usianya masih muda, Faris seorang yang _________ dan sering menjadi juara kuiz matematik.",
+                options: ["A. rabun ayam", "B. tajam akal", "C. pekak badak", "D. keras kepala"],
+                answer: 1,
+                explanation: "Tajam akal bermaksud cerdik atau cepat memahami sesuatu perkara."
+            },
+            {
+                question: "4. Nasihat ibu langsung tidak diendahkan oleh pemuda itu kerana dia seorang yang _________.",
+                options: ["A. keras hati", "B. mandi kerbau", "C. ringan mulut", "D. harga diri"],
+                answer: 0,
+                explanation: "Keras hati (atau keras kepala) bermaksud degil dan tidak mahu mendengar nasihat."
+            },
+            {
+                question: "5. Cikgu Salmah menyukai Suri kerana dia seorang murid yang _________ dan mesra apabila menyapa tetamu.",
+                options: ["A. berat mulut", "B. ringan mulut", "C. lidah bercabang", "D. bawa mulut"],
+                answer: 1,
+                explanation: "Ringan mulut bermaksud ramah tamah atau mesra dan mudah bercakap."
+            },
+            {
+                question: "6. Razak langsung tidak pandai bermain bola sepak kerana dia seorang yang _________.",
+                options: ["A. kaki botol", "B. kaki ayam", "C. kaki bangku", "D. kaki pukul"],
+                answer: 2,
+                explanation: "Kaki bangku bermaksud tidak pandai bermain bola sepak atau sukan."
+            },
+            {
+                question: "7. Ayah menjadi _________ apabila mendapati cermin kereta kesayangannya pecah.",
+                options: ["A. darah daging", "B. darah panas", "C. bawa angin", "D. panjang langkah"],
+                answer: 1,
+                explanation: "Darah panas bermaksud lekas marah atau cepat mengamuk."
+            },
+            {
+                question: "8. Ibu bapa Amin berasa _________ apabila melihat kejayaan cemerlang anaknya dalam peperiksaan.",
+                options: ["A. besar hati", "B. kecil hati", "C. putih hati", "D. iri hati"],
+                answer: 0,
+                explanation: "Besar hati bermaksud berasa bangga atau gembira atas sesuatu pencapaian."
+            },
+            {
+                question: "9. Janganlah kita menjadi _________ yang suka melagakan antara dua sahabat baik itu.",
+                options: ["A. lintah darat", "B. batu api", "C. tahi minyak", "D. paku belanda"],
+                answer: 1,
+                explanation: "Batu api bermaksud orang yang suka menghasut atau memecahbelahkan hubungan orang lain."
+            },
+            {
+                question: "10. Walaupun Amin hanya _________ kepada keluarga angkatnya, dia tetap dijaga dengan penuh kasih sayang.",
+                options: ["A. anak emas", "B. anak buah", "C. darah daging", "D. anak pungut"],
+                answer: 3,
+                explanation: "Anak pungut (atau anak angkat) bermaksud anak yang dipelihara bukan dari darah daging sendiri."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+        let soundEnabled = false;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTone(freq, type, duration, delay = 0) {
+            if (!soundEnabled) return;
+            initAudio();
+            setTimeout(() => {
+                try {
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch(e) {}
+            }, delay);
+        }
+
+        function playCorrectSound() {
+            playTone(523.25, 'sine', 0.15, 0);
+            playTone(659.25, 'sine', 0.15, 150);
+            playTone(783.99, 'sine', 0.3, 300);
+        }
+
+        function playWrongSound() {
+            playTone(220, 'sawtooth', 0.2, 0);
+            playTone(185, 'sawtooth', 0.3, 200);
+        }
+
+        function playVictoryFanfare() {
+            playTone(523.25, 'sine', 0.2, 0);
+            playTone(523.25, 'sine', 0.2, 200);
+            playTone(523.25, 'sine', 0.2, 400);
+            playTone(659.25, 'sine', 0.6, 600);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            let btn = document.getElementById('soundToggle');
+            if (soundEnabled) {
+                initAudio();
+                btn.innerHTML = "🔊 Muzik: Pasang";
+                playTone(440, 'sine', 0.1);
+            } else {
+                btn.innerHTML = "🔇 Muzik: Tutup";
+            }
+        }
+
+        function loadQuestion() {
+            answered = false;
+            let q = questions[currentQuestion];
+            document.getElementById('questionCount').innerText = `Soalan ${currentQuestion + 1} dari ${questions.length}`;
+            document.getElementById('scoreTracker').innerText = `Skor: ${score}`;
+            document.getElementById('questionText').innerText = q.question;
+            
+            let optionsList = document.getElementById('optionsList');
+            optionsList.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                let btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => selectOption(index);
+                optionsList.appendChild(btn);
+            });
+
+            document.getElementById('explanationBox').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+        }
+
+        function selectOption(selectedIndex) {
+            if (answered) return;
+            answered = true;
+
+            let q = questions[currentQuestion];
+            let buttons = document.getElementsByClassName('option-btn');
+
+            if (selectedIndex === q.answer) {
+                buttons[selectedIndex].classList.add('correct');
+                score++;
+                playCorrectSound();
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+            } else {
+                buttons[selectedIndex].classList.add('wrong');
+                buttons[q.answer].classList.add('correct');
+                playWrongSound();
+            }
+
+            document.getElementById('scoreTracker').innerText = `Skor: ${score}`;
+            document.getElementById('explanationText').innerText = q.explanation;
+            document.getElementById('explanationBox').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'block';
+
+            for (let btn of buttons) {
+                btn.disabled = true;
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quizBody').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+            document.getElementById('finalScore').innerText = `${score}/10`;
+            
+            let msg = "";
+            if (score === 10) {
+                msg = "Tahniah! Anda sangat hebat menguasai topik Simpulan Bahasa!";
+            } else if (score >= 7) {
+                msg = "Syabas! Prestasi yang cemerlang!";
+            } else {
+                msg = "Bagus! Teruskan usaha dan cuba lagi untuk lebih mantap.";
+            }
+            document.getElementById('resultMessage').innerText = msg;
+            playVictoryFanfare();
+            
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            document.getElementById('quizBody').style.display = 'block';
+            document.getElementById('resultScreen').style.display = 'none';
+            loadQuestion();
+        }
+
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>
